@@ -34,7 +34,7 @@ spec:
             - name: REGISTRY_CREDENTIALS
               value: build-bot
             - name: SERVICE_ADDRESS
-              value: http://kleincf.cf-system.knative.mybluemix-test.net
+              value: http://kleincf.cf-system.knative.knative.us-south.containers.appdomain.cloud
             - name: DOMAIN
-              value: cf-default.knative.mybluemix-test.net
+              value: cf-default.knative.knative.us-south.containers.appdomain.cloud
 
