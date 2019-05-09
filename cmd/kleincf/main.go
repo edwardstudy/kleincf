@@ -80,9 +80,13 @@ func main() {
 	router.HandleFunc("/v2/info", cc.InfoV2).Methods("GET")
 	router.HandleFunc("/v2/shared_domains", cc.SharedDomains).Methods("GET")
 	router.HandleFunc("/v2/shared_domains/{id}", cc.SharedDomain).Methods("GET")
+	// org and spaces from namespace labels
 	router.HandleFunc("/v2/organizations", cc.OrganizationsV2).Methods("GET")
 	router.HandleFunc("/v2/organizations/{id}/spaces", cc.SpacesV2).Methods("GET")
+
 	router.HandleFunc("/v2/organizations/{id}/private_domains", cc.SharedDomains).Methods("GET")
+
+	// spaces from namespace labels
 	router.HandleFunc("/v2/spaces", cc.SpacesV2).Methods("GET")
 	router.HandleFunc("/v2/spaces/{id}/summary", cc.SpaceSummaryV2).Methods("GET")
 	router.HandleFunc("/v2/jobs/{id}", cc.Jobs).Methods("GET")

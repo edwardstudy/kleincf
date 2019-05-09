@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jszroberto/kleincf/knative"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -34,7 +35,25 @@ func (cc *CloudController) UpdateApp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cc *CloudController) App(w http.ResponseWriter, r *http.Request) {
+	var runningInstances int
 	vars := mux.Vars(r)
+
+	service, err := cc.ServingClient.ServingV1alpha1().Services(cc.Namespace).Get(vars["id"], metav1.GetOptions{})
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// https://github.com/knative/serving/blob/e73150dceb5685ae0a701cbdaa720d0c755e4217/pkg/reconciler/v1alpha1/autoscaling/kpa/kpa.go#L216-L233
+	endpoints, err := cc.Client.CoreV1().Endpoints(cc.Namespace).Get(service.Name, metav1.GetOptions{})
+	if errors.IsNotFound(err) {
+		// Treat not found as zero endpoints and runningInstances is zero
+	} else if err != nil {
+		fmt.Println(err)
+	} else {
+		for _, es := range endpoints.Subsets {
+			runningInstances += len(es.Addresses)
+		}
+	}
 
 	route, err := cc.ServingClient.ServingV1alpha1().Routes(cc.Namespace).Get(vars["id"], metav1.GetOptions{})
 	if err != nil {
@@ -42,10 +61,11 @@ func (cc *CloudController) App(w http.ResponseWriter, r *http.Request) {
 	}
 
 	state := "STOPPED"
-	var runningInstances int
 	if route.Status.IsReady() {
 		state = "RUNNING"
-		runningInstances = 1
+
+		// I already knows to know my pods number of app from service endpoints
+		//runningInstances = 1
 	}
 
 	app := map[string]interface{}{
@@ -54,7 +74,7 @@ func (cc *CloudController) App(w http.ResponseWriter, r *http.Request) {
 		},
 		"entity": map[string]interface{}{
 			"name":              vars["id"],
-			"running_instances": runningInstances,
+			"running_instances": runningInstances, // TODO should we check pods status to update it
 			"instances":         runningInstances,
 			"disk_quota":        1024,
 			"package_state":     "STAGED",
